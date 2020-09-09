@@ -2,6 +2,7 @@ import wave
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 # Return an array of cosines.
 def getCosines(t, n):
@@ -20,7 +21,8 @@ def getSines(t, n):
 SUBSAMPLE_SIZE = 1024
 START_IDX = 1024
 
-audio = wave.open('audio-samples/single-note-clean.wav')
+NAME = 'power-chord-distorted'
+audio = wave.open('audio-samples/'+NAME+'.wav')
 
 signal = audio.readframes(-1)
 signal = np.fromstring(signal, "Int16")
@@ -28,18 +30,18 @@ fs = audio.getframerate()
 
 Time = np.linspace(0, len(signal)/fs, num=len(signal))
 plt.figure(1)
-plt.title("Signal Wave")
+plt.title("Original Signal")
 
 # Plot time by offsetting to starting point.
 #plt.plot(Time[START_IDX:START_IDX + SUBSAMPLE_SIZE],
 #         signal[START_IDX: START_IDX + SUBSAMPLE_SIZE])
 plt.plot(Time[0:SUBSAMPLE_SIZE],
          signal[START_IDX: START_IDX + SUBSAMPLE_SIZE])
-plt.show()
+plt.savefig('plots/fourier-series-empirical/'+ NAME + '-original.png')
 
 t = np.linspace(0, SUBSAMPLE_SIZE, num = SUBSAMPLE_SIZE) / 10.0
 fx = np.array([signal[START_IDX: START_IDX + SUBSAMPLE_SIZE]]).T
-N = 4000 # Number of terms in fourier expansion.
+N = 600 # Number of terms in fourier expansion.
 
 featMat = []
 print(len(t))
@@ -60,14 +62,15 @@ print(np.shape(fx))
 print(np.shape(featMat))
 print(np.shape(w))
 
-N_ITERS = 1000
-LR = 0.0005
+N_ITERS = 2000
+LR = 0.05
+frames = []
 for i in range(0, N_ITERS):
     l = (fx - np.dot(featMat, w))
     xT = featMat.T
     L = np.dot(xT, l)
-    w -= (1/N) * L * LR
-    print(i)
+    w += (1/N) * L * LR
+    # print(i)
 
 # Visualize the graph:
 fx_ = []
@@ -79,6 +82,7 @@ for ti in t:
     fx_.append(np.dot(feature_ary, w)[0, 0])
 
 plt.clf()
-plt.plot(Time[0:SUBSAMPLE_SIZE],fx_)
-plt.show()
-
+plt.title('Estimated using Fourier Series and Linear Regression')
+plt.plot(Time[0:SUBSAMPLE_SIZE],
+         fx_[0: SUBSAMPLE_SIZE])
+plt.savefig('plots/fourier-series-empirical/'+ NAME + '-estimated.png')
